@@ -44,6 +44,12 @@ const SpectrumLogo = ({ isDarkBg = false, showBusiness = true }) => {
 };
 
 function App() {
+  // CONFIGURATION: Replace this with your Cloudflare Worker URL when ready
+  const PROD_API_URL = 'https://fancy-credit-d78e.vivu6164.workers.dev'; 
+  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
+    ? '/spectrum-api' 
+    : (PROD_API_URL || '/spectrum-api');
+
   // Navigation State
   const [viewState, setViewState] = useState('landing');
 
@@ -78,6 +84,7 @@ function App() {
   const [pendingAutoCheck, setPendingAutoCheck] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [copySnapshot, setCopySnapshot] = useState('');
+  const [locationKey, setLocationKey] = useState('');
 
   // Bundle Selector States
   const [selectedServices, setSelectedServices] = useState({
@@ -146,9 +153,9 @@ function App() {
     setLoading(true);
     let url = '';
     if (type === 'disclaims') {
-      url = '/spectrum-api/checkout/x-ref/disclaimers-modal/_jcr_content/root/responsivegrid/responsivegrid.model.json';
+      url = `${API_BASE}/checkout/x-ref/disclaimers-modal/_jcr_content/root/responsivegrid/responsivegrid.model.json`;
     } else {
-      url = '/spectrum-api/content/spectrum/buyflow-business/en/xref-global/broadband-label-modal/_jcr_content/root/responsivegrid/responsivegrid_141585965.model.json';
+      url = `${API_BASE}/content/spectrum/buyflow-business/en/xref-global/broadband-label-modal/_jcr_content/root/responsivegrid/responsivegrid_141585965.model.json`;
     }
 
     try {
@@ -190,8 +197,9 @@ function App() {
     const requestBody = {
       addressInformation: {
         line1: address,
-        line2: apt,
-        postalCode: zip
+        ...(apt ? { line2: apt } : {}),
+        postalCode: zip,
+        ...(locationKey ? { locationKey: locationKey } : {})
       },
       channelInformation: {
         affiliateId: "218739",
@@ -209,7 +217,7 @@ function App() {
 
     try {
       const resp = await fetch(
-        '/spectrum-api/services/spectrum/serviceability/proxy.api/serviceability-wrapper/v2/offers/address?returnSessionInfo=true&system=CSS',
+        `${API_BASE}/services/spectrum/serviceability/proxy.api/serviceability-wrapper/v2/offers/address?returnSessionInfo=true&system=CSS`,
         {
           method: 'POST',
           headers: {
@@ -289,16 +297,23 @@ function App() {
   };
 
   const handleAddressSelect = (addr) => {
+    // Force line2 to be empty string if it's missing or says "N/A"
+    const suite = addr.line2 && addr.line2 !== 'N/A' ? addr.line2 : '';
+    
     setAddress(addr.line1);
-    setApt(addr.line2 || '');
+    setApt(suite);
     setZip(addr.postalCode);
+    setLocationKey(addr.locationKey || '');
     setMultiMatchData(null);
     setAddressSearch('');
+    
+    // Move to landing and trigger the check
     setViewState('landing');
     setPendingAutoCheck(true);
   };
 
   const handleEditLocation = () => {
+    setLocationKey('');
     setViewState('landing');
   };
 

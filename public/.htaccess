@@ -1,0 +1,13 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1. Route /spectrum-api/ requests to the PHP proxy
+  RewriteRule ^spectrum-api/(.*)$ spectrum-proxy.php?path=$1 [QSA,L]
+
+  # 2. Standard SPA routing (if using react-router-dom in the future)
+  # If the requested filename exists, use it. Otherwise, use index.html
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
