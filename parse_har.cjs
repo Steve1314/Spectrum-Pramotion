@@ -6,7 +6,7 @@ if (entries.length > 0) {
     console.log("Content object structure:");
     console.log(Object.keys(entry.response.content));
     console.log("Has text? ", !!entry.response.content.text);
-    if(entry.response.content.text) {
+    if (entry.response.content.text) {
         console.log("Text length: ", entry.response.content.text.length);
     }
 } else {
